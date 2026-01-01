@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Web con Base de Datos</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; }
+        input { padding: 10px; width: 70%; }
+        button { padding: 10px; cursor: pointer; background: #3ecf8e; color: white; border: none; }
+        #listaComentarios { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Deja un comentario</h2>
+    <input type="text" id="inputMensaje" placeholder="Escribe algo...">
+    <button onclick="enviarDato()">Enviar</button>
+
+    <div id="listaComentarios">
+        <h3>Mensajes en la Base de Datos:</h3>
+        <ul id="mensajes"></ul>
+    </div>
+
+<script>
+    // 1. CONFIGURACIÓN
+    const SB_URL = "https://hwxconqyjrauarbqmtcs.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3eGNvbnF5anJhdWFyYnFtdGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxNDEwNzYsImV4cCI6MjA4MjcxNzA3Nn0.v075eY3cZrnfXTjgqmpp-3GE1er9vOxOpFr6H7xxyAo";
+
+    // Creamos el cliente con un nombre distinto para que no choque: "clienteSupa"
+    const clienteSupa = supabase.createClient(SB_URL, SB_KEY);
+
+    // 2. FUNCIÓN PARA ENVIAR DATOS
+    async function enviarDato() {
+        const input = document.getElementById('inputMensaje');
+        const texto = input.value;
+
+        if (!texto) return;
+
+        console.log("Enviando...");
+
+        const { error } = await clienteSupa
+            .from('comentarios') // <--- REVISA QUE TU TABLA SE LLAME ASÍ
+            .insert([{ contenido: texto }]);
+
+        if (error) {
+            console.error("Error al insertar:", error.message);
+        } else {
+            console.log("¡Éxito!");
+            input.value = ""; // Limpiar el cuadro
+            leerDatos(); // Actualizar la lista
+        }
+    }
+
+    // 3. FUNCIÓN PARA LEER DATOS
+    async function leerDatos() {
+        const { data, error } = await clienteSupa
+            .from('comentarios')
+            .select('*');
+
+        if (error) {
+            console.error("Error al leer:", error.message);
+            return;
+        }
+
+        const lista = document.getElementById('mensajes');
+        lista.innerHTML = ""; 
+        
+        data.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item.contenido;
+            lista.appendChild(li);
+        });
+    }
+
+    // Cargar datos al iniciar
+    leerDatos();
+</script>
+</body>
+</html>
